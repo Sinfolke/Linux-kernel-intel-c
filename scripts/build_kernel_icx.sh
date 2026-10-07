@@ -52,6 +52,6 @@ make -C "${KERNEL_SRC}" -j"${JOBS}" \
   OBJDUMP=llvm-objdump \
   READELF=llvm-readelf \
   LLVM_IAS=1 \
-  KCFLAGS="-ffreestanding -fno-builtin" \
+  KCFLAGS="-ffreestanding -fno-builtin -diag-disable=10430" \
   ${TARGETS} \
   "${EXTRA_MAKE_ARGS[@]}"
