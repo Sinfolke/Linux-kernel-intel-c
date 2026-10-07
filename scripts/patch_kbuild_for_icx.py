@@ -13,6 +13,13 @@ icx|icx.exe)
 esac
 """
 
+HYPERV_PRAGMA_BLOCK = """#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wall"
+#pragma clang diagnostic ignored "-Wextra"
+#pragma clang diagnostic ignored "-Wpedantic"
+#pragma clang diagnostic ignored "-Wframe-larger-than"
+"""
+
 
 def patch_as_version(path: pathlib.Path) -> bool:
     text = path.read_text(encoding="utf-8")
@@ -70,6 +77,27 @@ def patch_makefile(path: pathlib.Path) -> bool:
     return True
 
 
+def patch_hyperv(path: pathlib.Path) -> bool:
+    text = path.read_text(encoding="utf-8")
+    if HYPERV_PRAGMA_BLOCK.strip() in text:
+        return False
+
+    lines = text.splitlines(keepends=True)
+    insert_idx = 0
+    for i, line in enumerate(lines):
+        if line.startswith("#include "):
+            insert_idx = i
+            break
+
+    block = HYPERV_PRAGMA_BLOCK + "\n"
+    if insert_idx > 0 and lines[insert_idx - 1].strip():
+        block = "\n" + block
+    lines.insert(insert_idx, block)
+
+    path.write_text("".join(lines), encoding="utf-8")
+    return True
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Patch Linux kernel build scripts for Intel oneAPI icx."
@@ -84,8 +112,9 @@ def main() -> int:
     kernel_src = pathlib.Path(args.kernel_src).resolve()
     as_version = kernel_src / "scripts" / "as-version.sh"
     makefile = kernel_src / "Makefile"
+    hyperv = kernel_src / "arch" / "x86" / "kvm" / "hyperv.c"
 
-    if not as_version.exists() or not makefile.exists():
+    if not as_version.exists() or not makefile.exists() or not hyperv.exists():
         print("Kernel source tree missing expected files.", file=sys.stderr)
         return 1
 
@@ -94,6 +123,8 @@ def main() -> int:
         changed.append(str(as_version))
     if patch_makefile(makefile):
         changed.append(str(makefile))
+    if patch_hyperv(hyperv):
+        changed.append(str(hyperv))
 
     if changed:
         print("Patched:")

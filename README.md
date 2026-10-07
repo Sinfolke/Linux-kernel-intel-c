@@ -20,6 +20,7 @@ It includes:
   Patches kernel source tree files:
   - `scripts/as-version.sh` (treats `icx` as LLVM IAS)
   - top-level `Makefile` (selects `scripts/Makefile.clang` for Intel compiler text)
+  - `arch/x86/kvm/hyperv.c` (adds required clang diagnostic pragmas)
 
 - `/home/runner/work/Linux-kernel-intel-c/Linux-kernel-intel-c/scripts/build_kernel_icx.sh`  
   Runs `make` with recommended Intel/LLVM toolchain variables and `KCFLAGS="-ffreestanding -fno-builtin"`.
